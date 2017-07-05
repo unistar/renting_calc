@@ -16,6 +16,7 @@ ActiveRecord::Schema.define do
       t.column :end_date, :date
       t.column :price, :integer, default: 0
       t.column :cycles, :integer, default: 0
+      t.column :contract_id, :integer, null: false
     end
   end
 
@@ -33,8 +34,9 @@ ActiveRecord::Schema.define do
       t.column :start_date, :date
       t.column :end_date, :date
       t.column :unit_price, :integer, default: 0
-      t.column :units, :integer, default: 0  # use enum
+      t.column :unit, :integer, default: 0  # use enum
       t.column :total, :integer, default: 0
+      t.column :invoice_id, :integer, null: false
     end
   end
 end
