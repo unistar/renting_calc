@@ -1,0 +1,17 @@
+base: &base
+  adapter: sqlite3
+  encoding: utf8
+  pool: 5
+
+development:
+  <<: *base
+  database: db/development.sqlite3
+
+test:
+  <<: *base
+  database: db/test.sqlite3
+
+production:
+  <<: *base
+  database: db/production.sqlite3
+
