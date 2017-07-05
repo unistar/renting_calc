@@ -11,8 +11,6 @@ require_relative 'tables'
 
 Bundler.require :default, ENV['RACK_ENV'].to_sym
 
-
-
 class Contract < ActiveRecord::Base
   has_many :renting_phases, dependent: :destroy
 
