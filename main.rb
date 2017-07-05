@@ -33,8 +33,17 @@ class Contract < ActiveRecord::Base
         c.save
       end
       phases.each do |phase|
-        contract.renting_phases.create phase
+        contract.renting_phases.create phase.slice(:price, :cycles).merge(start_date: Date.parse(phase[:start_time]), end_date: Date.parse(phase[:end_time]))
       end
+      contract
+    end
+
+    private
+
+    def phases_overlap_or_inconsecutive?(phases)
+      return false if phases.count == ONE_PHASE
+      res = phases.sort {|left, right| Date.parse(left[:start_time]) <=> Date.parse(right[:start_time]) }
+      res.each_cons(2).any? {|x, y| Date.parse(x[:end_time]) + 1.day != Date.parse(y[:start_time])}
     end
   end
 
@@ -49,18 +58,12 @@ class Contract < ActiveRecord::Base
 
   private
 
-  def phases_overlap_or_inconsecutive?(phases)
-    return false if phases.count == ONE_PHASE
-    res = phases.sort {|left, right| Date.parse(left[:start_time]) <=> Date.parse(right[:start_time]) }
-    res.each_cons(2).any? {|x, y| Date.parse(x[:end_time]) + 1.day != Date.parse(y[:start_time])}
-  end
-
   def invoice_creation(start_time, end_time, price)
     invoice = Invoice.find_or_create_by(start_date: start_time, end_date: end_time, due_date: Date.parse("#{start_time.year}-#{start_time.month - 1}-15"))
     if start_time + 1.month - 1.day > end_time # get the line item for renting for less than a month
       line_item_less_than_a_month(invoice, start_time, end_time, price)
     else # over a month
-      months = (end_time - start_time).to_i / REGULAR_DAYS_IN_A_MONTH
+      months = (end_time - start_time).to_i / FEWEST_DAYS_IN_A_MONTH
       rent_end = start_time + months.month - 1.day
       if rent_end > end_time
         months -= 1
@@ -83,7 +86,7 @@ class Contract < ActiveRecord::Base
 
   def split_cycles(res, start_time, end_time, cycles)
     start = start_time
-    finish = start + cycles.to_i * month - 1.day
+    finish = start + cycles.to_i.month - 1.day
     return res << [start, end_time] if finish >= end_time
     res << [start, finish]
     split_cycles(res, finish + 1.day, end_time, cycles)
